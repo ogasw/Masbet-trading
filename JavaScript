@@ -1,0 +1,41 @@
+const express = require("express");
+const axios = require("axios");
+const cors = require("cors");
+
+const app = express();
+app.use(express.json());
+app.use(cors());
+
+let bitcoinPrice = 0;
+
+// Fetch Bitcoin price from Binance API
+const fetchPrice = async () => {
+  try {
+    const response = await axios.get(
+      "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT"
+    );
+    bitcoinPrice = parseFloat(response.data.price);
+  } catch (error) {
+    console.error("Error fetching Bitcoin price:", error);
+  }
+};
+setInterval(fetchPrice, 5000); // Refresh every 5 seconds
+fetchPrice();
+
+app.get("/api/price", (req, res) => {
+  res.json({ price: bitcoinPrice });
+});
+
+app.post("/api/trade", (req, res) => {
+  const { amount, prediction } = req.body;
+  const randomOutcome = Math.random() > 0.5 ? "up" : "down";
+
+  if (prediction === randomOutcome) {
+    res.json({ message: `You won! ${amount * 1.8} USD added to your balance.` });
+  } else {
+    res.json({ message: `You lost! ${amount} USD deducted from your balance.` });
+  }
+});
+
+const PORT = 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
